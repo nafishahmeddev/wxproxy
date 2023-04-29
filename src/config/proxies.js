@@ -1,6 +1,6 @@
 module.exports =  {
-    "main": {
-        target: "http://localhost:8001",
+    "auth": {
+        target: "http://localhost:8001/auth",
         ws: false,
         interceptors: [
             (req, res, next) => {

@@ -2,8 +2,9 @@ import express from "express";
 import Logger from './lib/logger';
 import fs from "fs";
 import path from "path";
-import proxyMiddleware from 'express-http-proxy';
 import ConnectSequence from "connect-sequence";
+const { createProxyMiddleware } = require('http-proxy-middleware');
+
 import chalk from "chalk";
 
 //assign logger to the project
@@ -11,6 +12,10 @@ Logger({ scope: "Gateway" });
 
 //initiate express app
 const app = express();
+
+//
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '/../views'));
 
 //initiate proxies
 global.proxies = {};
@@ -30,7 +35,8 @@ const reboot = async () => {
     await reloadProxies();
 
     //assigning dynamic routes
-    app.get("/", (req, res) => res.send("Cool"));
+    app.get("/", (req, res) => res.send("Gateway is running...."));
+    app.get("/auth", (req, res) => res.send("Auth service called...."));
 
     //handling proxies
     app.use("/api/v1/:segments*", (req: any, res, next) => {
@@ -38,9 +44,9 @@ const reboot = async () => {
         const prefix = segments.split("/")[0];
         const proxy = global.proxies[prefix];
 
-        console.log("Request for", segments)
+        console.info("Request for", segments)
 
-        if (!proxy) return res.status(404).send("404 not found");
+        if (!proxy) return res.status(404).render("errors/404.ejs",{status: 404});
 
 
         //handle interceptor
@@ -53,16 +59,22 @@ const reboot = async () => {
 
         //appending dynamic proxy
         console.info("Appending main handler");
-        let uri = segments.replace(`${prefix}/`, "");
-        uri = uri.endsWith('/') ? uri.slice(0, -1) : uri;
-        const url = `${proxy.target}/${uri}`;
-        console.info("Full url is", url, ", Segment: ", uri);
-        sequence.append(proxyMiddleware(url));
+        sequence.append(createProxyMiddleware({
+            target: proxy.target,
+            ws: proxy.ws ? true: false,
+            pathRewrite: {
+                [`^/api/v1/${prefix}`]: '/',
+              },
+        }))
 
         //execute
         console.info("Executing handler");
         sequence.run();
     });
+
+    //set fallback
+    app.use("*", (req,res)=>res.status(404).render("errors/404.ejs", {status: 404}));
+
 
     const port = 8001;
     app.listen(port, "localhost", () => {
