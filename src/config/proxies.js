@@ -1,6 +1,6 @@
 module.exports = {
     "auth": {
-        target: "http://localhost:8001/auth",
+        target: "http://localhost:3000/auth",
         ws: false,
         interceptors: [
             (req, res, next) => {

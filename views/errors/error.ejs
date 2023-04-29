@@ -4,6 +4,7 @@
   <style>
     * {
       transition: all 0.6s;
+      box-sizing: border-box;
     }
 
     html {
@@ -14,13 +15,23 @@
       font-family: 'Lato', sans-serif;
       color: #888;
       margin: 0;
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      align-items: center;
+      justify-content: center;
     }
 
     #main {
       display: table;
-      width: 100%;
-      height: 100vh;
-      text-align: center;
+      max-width: 1100px;
+      margin: auto;
+      border: 1px solid #e5e5e5;
+      flex-grow: 1;
+      padding: 25px 25px;
+      background-color: #fafafa;
+      border-radius: 10px;
+
     }
 
     .fof {
@@ -28,8 +39,7 @@
       vertical-align: middle;
     }
 
-    .fof h1 {
-      font-size: 50px;
+    .fof h2 {
       display: inline-block;
       padding-right: 12px;
       animation: type .5s alternate infinite;
@@ -50,7 +60,13 @@
 <body>
   <div id="main">
     <div class="fof">
-      <h1>Error <%- status %></h1>
+      <h2>Error <%- status %></h2>
+      <h4><%- message %></h4>
+      <p>
+<pre>
+<%- description %>
+</pre>
+      </p>
     </div>
   </div>
 </body>
