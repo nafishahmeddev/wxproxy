@@ -13,17 +13,12 @@ global.handlersName = null;
 global.handlers = {};
 const reloadHandlers = async () => {
     try {
-        const timestamp  = Date.now()
-        fs.copyFileSync(__dirname+"/config/routes.js", `${__dirname}/config/routes-${timestamp}.js`);
-        global.handlers = (await import(`./config/routes-${timestamp}.js`)).default;
-        // delete req
-        delete require.cache[require.resolve(`./config/routes-${timestamp}.js`)];
-        global.handlersName && fs.rmSync(global.handlersName);
-        //
-        global.handlersName = `${__dirname}/config/routes-${timestamp}.js`;
-        console.log("Handler has been re populated", global.handlers);
+
+        delete require.cache[require.resolve(`./config/routes.js`)];
+        global.handlers = (await import(`./config/routes.js`)).default;
+        console.success("Handler has been re populated successfully");
     } catch (err) {
-        console.error("There is some malformed in routes", err);
+        console.error("There is some error in routes", err);
     }
 }
 const reboot = async () => {
