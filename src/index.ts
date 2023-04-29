@@ -13,7 +13,7 @@ Logger({ scope: "Gateway" });
 //initiate express app
 const app = express();
 
-//
+//initiate view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '/../views'));
 
@@ -36,7 +36,9 @@ const reboot = async () => {
 
     //assigning dynamic routes
     app.get("/", (req, res) => res.send("Gateway is running...."));
-    app.get("/auth", (req, res) => res.send("Auth service called...."));
+    app.get("/auth", (req, res) => {
+        throw new Error("this is error");
+    });
 
     //handling proxies
     app.use("/api/v1/:segments*", (req: any, res, next) => {
@@ -46,7 +48,7 @@ const reboot = async () => {
 
         console.info("Request for", segments)
 
-        if (!proxy) return res.status(404).render("errors/404.ejs",{status: 404});
+        if (!proxy) return res.status(404).render("errors/404.ejs", { status: 404 });
 
 
         //handle interceptor
@@ -61,10 +63,10 @@ const reboot = async () => {
         console.info("Appending main handler");
         sequence.append(createProxyMiddleware({
             target: proxy.target,
-            ws: proxy.ws ? true: false,
+            ws: proxy.ws ? true : false,
             pathRewrite: {
                 [`^/api/v1/${prefix}`]: '/',
-              },
+            },
         }))
 
         //execute
@@ -72,8 +74,8 @@ const reboot = async () => {
         sequence.run();
     });
 
-    //set fallback
-    app.use("*", (req,res)=>res.status(404).render("errors/404.ejs", {status: 404}));
+    //set fallback 404
+    app.use("*", (req, res) => res.status(404).render("errors/404.ejs", { status: 404 }));
 
 
     const port = 8001;
