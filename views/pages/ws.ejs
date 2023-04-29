@@ -1,0 +1,16 @@
+<html>
+
+<head>
+
+</head>
+
+<body>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io("http://localhost:8001", {
+      path: "/api/v1/wss"
+    });
+  </script>
+</body>
+
+</html>

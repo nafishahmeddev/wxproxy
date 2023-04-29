@@ -1,4 +1,4 @@
-module.exports =  {
+module.exports = {
     "auth": {
         target: "http://localhost:8001/auth",
         ws: false,
@@ -7,5 +7,11 @@ module.exports =  {
                 return next();
             }
         ]
+    },
+    "wss": {
+        target: "http://localhost:8001",
+        changeOrigin: true,
+        ws: true,
+        logLevel: 'debug',
     }
 }

@@ -3,7 +3,9 @@ import Logger from './lib/logger';
 import fs from "fs";
 import path from "path";
 import ConnectSequence from "connect-sequence";
-const { createProxyMiddleware } = require('http-proxy-middleware');
+import { createProxyMiddleware } from 'http-proxy-middleware';
+import { Server } from "socket.io";
+import http from "http";
 
 import chalk from "chalk";
 
@@ -30,15 +32,13 @@ const reloadProxies = async () => {
     }
 }
 const reboot = async () => {
-
     //loading proxies
     await reloadProxies();
 
     //assigning dynamic routes
-    app.get("/", (req, res) => res.send("Gateway is running...."));
-    app.get("/auth", (req, res) => {
-        throw new Error("this is error");
-    });
+    app.get("/test", (req, res) => res.send("Gateway is running...."));
+    app.get("/auth", (req, res) => res.render("pages/ws.ejs"));
+    //app.get("/ws", (req, res) => res.render("pages/ws.ejs"));
 
     //handling proxies
     app.use("/api/v1/:segments*", (req: any, res, next) => {
@@ -61,13 +61,18 @@ const reboot = async () => {
 
         //appending dynamic proxy
         console.info("Appending main handler");
+
         sequence.append(createProxyMiddleware({
             target: proxy.target,
             ws: proxy.ws ? true : false,
+            changeOrigin: proxy.changeOrigin ? true: false,
+            logLevel: "silent",
             pathRewrite: {
                 [`^/api/v1/${prefix}`]: '/',
             },
         }))
+
+
 
         //execute
         console.info("Executing handler");
@@ -78,8 +83,22 @@ const reboot = async () => {
     app.use("*", (req, res) => res.status(404).render("errors/404.ejs", { status: 404 }));
 
 
+    //initialize server
+    const server = http.createServer(app);
+
+    // //initialize socket io
+    // const io = new Server(server, {
+    //     path: '/api/v1/wss',
+    // });
+    // io.on('connection', (socket) => {
+    //     console.info('a user connected');
+    // });
+
+    
+
+    //listen to server
     const port = 8001;
-    app.listen(port, "localhost", () => {
+    server.listen(port, "localhost", () => {
         console.success("Server listening to ", chalk.green(port));
     })
 }
