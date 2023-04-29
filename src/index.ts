@@ -110,7 +110,7 @@ const reboot = async () => {
 
     //listen to server
     const port = Number(process.env.PORT) || 8000;
-    server.listen(port, "localhost", () => {
+    server.listen(port, () => {
         console.success("Server listening to ", chalk.green(port));
     })
 }
