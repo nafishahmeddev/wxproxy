@@ -76,7 +76,7 @@ const reboot = async () => {
             target: proxy.target,
             ws: proxy.ws ? true : false,
             changeOrigin: proxy.changeOrigin ? true : false,
-            logLevel: "silent",
+            //logLevel: "silent",
             pathRewrite: {
                 [`^/api/v1/${prefix}`]: '/',
             },
