@@ -7,11 +7,7 @@ export const HttpLogger = (options = { response: true }) => (req: any, res: any,
     req.time = moment();
     req.id = moment().unix();
 
-    const resDotSendInterceptor = (res, send) => (content) => {
-        res.contentBody = content;
-        res.send = send;
-        res.send(content);
-    };
+
     console.log(chalk.yellow(`\n\n>>>>>>>>> REQUEST START : `), chalk.bgRed(" ID:", req.id,));
     console.log(chalk.bgGreenBright(chalk.bgYellowBright(req.method), req.originalUrl));
     console.log(chalk.blue("HEADER"), ": ", req.headers);
@@ -19,8 +15,13 @@ export const HttpLogger = (options = { response: true }) => (req: any, res: any,
     console.log(chalk.blue("QUERY "), ": ", req.query);
     console.log(chalk.blue("BODY  "), ": ", req.body);
 
-    if (options.response) {
-        res.send = resDotSendInterceptor(res, res.send);
+    if (options.response == true) {
+        const interceptor = (res, send) => (content) => {
+            res.contentBody = content;
+            res.send = send;
+            res.send(content);
+        };
+        res.send = interceptor(res, res.send);
         res.on("finish", () => {
             console.log(chalk.blue(`RESPONSE`), `${moment.duration(moment().diff(req.time)).asMilliseconds()}ms`);
             let resBody: any = null;
