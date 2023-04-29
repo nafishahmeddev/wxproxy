@@ -5,7 +5,7 @@ import path from "path";
 import moment from "moment";
 
 export default (config: {
-    prefix: string
+    scope: string
 }) => {
     const currentTime = moment();
     const options = {
@@ -18,7 +18,7 @@ export default (config: {
                 flags: "a"
             })
         ],
-        scope: config.prefix,
+        scope: config.scope,
     };
 
     const signale = new Signale(options);

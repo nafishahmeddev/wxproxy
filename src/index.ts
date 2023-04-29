@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 
 Logger({
-    prefix: "API Gateway"
+    scope: "API Gateway"
 });
 let service = null;
 const reboot = async () => {
