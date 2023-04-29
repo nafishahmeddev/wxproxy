@@ -1,0 +1,28 @@
+{
+  "name": "xpeed-router",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "module": "commonjs",
+  "scripts": {
+    "dev": "NODE_ENV=dev nodemon src/index.ts",
+    "build": "tsc",
+    "start" : "node dist/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    
+    "chalk": "^4.1.2",
+    "fast-gateway": "^3.4.5",
+    "moment": "^2.29.4",
+    "npmlog": "^7.0.1",
+    "signale": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.17",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4"
+
+  }
+}
