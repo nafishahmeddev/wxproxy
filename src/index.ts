@@ -9,44 +9,52 @@ import ConnectSequence from "connect-sequence";
 Logger({ scope: "API Gateway" });
 
 const app = express();
-global.handlersName = null;
-global.handlers = {};
-const reloadHandlers = async () => {
+global.proxiesName = null;
+global.proxies = {};
+const reaoadProxies = async () => {
     try {
 
-        delete require.cache[require.resolve(`./config/routes.js`)];
-        global.handlers = (await import(`./config/routes.js`)).default;
-        console.success("Handler has been re populated successfully");
+        delete require.cache[require.resolve(`./config/proxies.js`)];
+        global.proxies = (await import(`./config/proxies.js`)).default;
+        console.success("proxy has been re populated successfully");
     } catch (err) {
         console.error("There is some error in routes", err);
     }
 }
 const reboot = async () => {
 
-    //loading handlers
-    await reloadHandlers();
+    //loading proxies
+    await reaoadProxies();
 
     //assigning dynamic routes
     app.get("/", (req, res) => res.send("Cool"));
 
     //handling proxies
-    app.use("/api/v1/:segments",(req: any, res, next) => {
+    app.use("/api/v1/:segments*", (req: any, res, next) => {
         const segments = req.params.segments;
         const prefix = segments.split("/")[0];
-        const handler = global.handlers[prefix];
-        if (!handler) return next(new Error("Handler not found"));
-        const uri = segments.replace(`${prefix}`, "");
+        const proxy = global.proxies[prefix];
 
-        //handle middleware
-        console.log("request goes to handler");
+        console.log("Request for", segments)
+
+        if (!proxy) return res.status(404).send("404 not found");
+
+
+        //handle interceptor
+        console.info("request goes to proxy");
         const sequence = new ConnectSequence(req, res, next);
-        //appending middleware dynamically
-        console.log("appending middleware dynamically");
-        sequence.append(...(handler.middlewares ?? []));
 
-        //appending dynamic handler
-        console.log("appending dynamic handler");
-        sequence.append(proxy(`${handler.endpoint}/${segments}${uri}`));
+        //appending interceptor dynamically
+        console.info("appending interceptor dynamically");
+        sequence.append(...(proxy.interceptors ?? []));
+
+        //appending dynamic proxy
+        console.info("appending dynamic proxy");
+        let uri = segments.replace(`${prefix}/`, "");
+        uri = uri.endsWith('/') ? uri.slice(0, -1) : uri;
+        const url = `${proxy.endpoint}/${uri}`;
+        console.log("URL is", url, uri);
+        sequence.append(proxy(url));
         sequence.run();
     });
 
@@ -58,6 +66,6 @@ const reboot = async () => {
 reboot();
 //watch route file
 fs.watchFile(path.resolve(__dirname + `/config/routes.${process.env.NODE_ENV == "dev" ? "js" : "js"}`), async (curr, prev) => {
-    console.log("Handlers file has been changed reassigning handlers");
-    await reloadHandlers();
+    console.warn("proxies file has been changed reassigning proxies");
+    await reaoadProxies();
 });

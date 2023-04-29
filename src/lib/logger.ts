@@ -10,7 +10,7 @@ export default (config: {
     const currentTime = moment();
     const options = {
         disabled: false,
-        interactive: true,
+        interactive: false,
         secrets: [],
         stream: [
             process.stdout,
