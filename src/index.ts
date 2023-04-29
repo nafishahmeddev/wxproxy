@@ -22,7 +22,9 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '/../views'));
 
 //http logger
-app.use(HttpLogger);
+app.use(HttpLogger({
+    response : false
+}));
 
 //initiate proxies
 let proxies = {};
