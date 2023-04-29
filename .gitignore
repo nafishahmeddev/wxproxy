@@ -1,3 +1,4 @@
 dist/
 node_modules/
 logs/*.log
+src/config/routes-*.js

@@ -1,37 +1,68 @@
-import Gateway from 'fast-gateway';
+import express from "express";
 import Logger from './lib/logger';
 import fs from "fs";
 import path from "path";
+import proxy from "express-http-proxy";
+import ConnectSequence from "connect-sequence";
 
-Logger({
-    scope: "API Gateway"
-});
-let service = null;
+//assign logger to the project
+Logger({ scope: "API Gateway" });
+
+const app = express();
+global.handlersName = null;
+global.handlers = {};
+const reloadHandlers = async () => {
+    try {
+        const timestamp  = Date.now()
+        fs.copyFileSync(__dirname+"/config/routes.js", `${__dirname}/config/routes-${timestamp}.js`);
+        global.handlers = (await import(`./config/routes-${timestamp}.js`)).default;
+        // delete req
+        delete require.cache[require.resolve(`./config/routes-${timestamp}.js`)];
+        global.handlersName && fs.rmSync(global.handlersName);
+        //
+        global.handlersName = `${__dirname}/config/routes-${timestamp}.js`;
+        console.log("Handler has been re populated", global.handlers);
+    } catch (err) {
+        console.error("There is some malformed in routes", err);
+    }
+}
 const reboot = async () => {
-    const routes  = (await import("./config/routes")).default;
-    const gateway = Gateway({
-        routes: routes,
-        middlewares:[
-            (req, res, next)=>{
-                console.info("Request arrived")
-                return next();
-            }
-        ]
+
+    //loading handlers
+    await reloadHandlers();
+
+    //assigning dynamic routes
+    app.get("/", (req, res) => res.send("Cool"));
+
+    //handling proxies
+    app.use("/api/v1/:segments",(req: any, res, next) => {
+        const segments = req.params.segments;
+        const prefix = segments.split("/")[0];
+        const handler = global.handlers[prefix];
+        if (!handler) return next(new Error("Handler not found"));
+        const uri = segments.replace(`${prefix}`, "");
+
+        //handle middleware
+        console.log("request goes to handler");
+        const sequence = new ConnectSequence(req, res, next);
+        //appending middleware dynamically
+        console.log("appending middleware dynamically");
+        sequence.append(...(handler.middlewares ?? []));
+
+        //appending dynamic handler
+        console.log("appending dynamic handler");
+        sequence.append(proxy(`${handler.endpoint}/${segments}${uri}`));
+        sequence.run();
     });
-    await gateway.start(8000).then((_evt) => {
-        console.success( "service has been deployed to ", JSON.stringify(_evt.address(), null, 2));
-        service = _evt;
-    }).catch(err => {
-        console.fetal(err);
+
+    const port = 8001;
+    app.listen(port, "localhost", () => {
+        console.success("Server listening to ", port);
     })
 }
-
-const routesFile = path.resolve(__dirname + `/config/routes.${process.env.NODE_ENV=="dev"? "ts": "js"}`);
-console.log(routesFile);
-fs.watchFile(routesFile, (curr, prev)=>{
-    console.warn("Route configuration changed. restarting service");
-    service?.close();
-    reboot();
-});
-
 reboot();
+//watch route file
+fs.watchFile(path.resolve(__dirname + `/config/routes.${process.env.NODE_ENV == "dev" ? "js" : "js"}`), async (curr, prev) => {
+    console.log("Handlers file has been changed reassigning handlers");
+    await reloadHandlers();
+});
