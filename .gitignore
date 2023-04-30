@@ -3,3 +3,4 @@ node_modules/
 logs/*.log
 src/config/routes-*.js
 .env
+config/proxies.js
