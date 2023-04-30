@@ -73,7 +73,7 @@ export default async function ProxyHandler(options: {
         }))
 
         //execute
-        console.info("Executing handler");
+        options.debug && console.info("Executing handler");
         sequence.run();
     }
 }
