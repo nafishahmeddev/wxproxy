@@ -5,6 +5,7 @@ import ConnectSequence from "connect-sequence";
 import { createProxyMiddleware } from 'http-proxy-middleware';
 
 
+let _console : any = console;
 function parse(str) {
     return Function(`'use strict'; return (${str})`)()
 }
@@ -12,7 +13,7 @@ function parse(str) {
 let proxies = [];
 const reload = async (filepath) => {
     try {
-        console.info("Initiating proxies...");
+        _console.info("Initiating proxies...");
         const proxiesString = fs.readFileSync(filepath).toString();
         const tmpFile = __dirname + "/proxies.tmp.js";
         fs.writeFileSync(tmpFile, proxiesString);
@@ -22,23 +23,32 @@ const reload = async (filepath) => {
 
         }
         proxies = (await import("./proxies.tmp.js")).default;
-        console.success("Proxies has been repopulated successfully");
+        _console.success("Proxies has been repopulated successfully");
     } catch (err) {
-        console.error("There is some error in routes", err);
+        _console.error("There is some error in routes", err);
     }
 }
 
 const watcher = (filepath) => {
     //watch route file
     fs.watchFile(path.resolve(filepath), async (curr, prev) => {
-        console.warn("proxies file has been changed reassigning proxies");
+        _console.warn("proxies file has been changed reassigning proxies");
         await reload(filepath);
     });
 }
 
 export default async function ProxyHandler(options: {
-    filepath: string
+    filepath: string,
+    debug? : boolean
 }) {
+    //assign console 
+    _console = options.debug? console : {
+        log: (...data)=>{},
+        info: (...data)=>{},
+        error: (...data)=>{},
+        debug: (...data)=>{},
+        fetal: (...data)=>{},
+    };
     //assign watcher
     await watcher(options.filepath);
 
@@ -50,22 +60,22 @@ export default async function ProxyHandler(options: {
             if (proxy.host && proxy.host != "*" && proxy.host != req.hostname) return false;
             return req.originalUrl.startsWith(proxy.prefix)
         });
-        console.info("Request for: ", chalk.blue(req.originalUrl))
+        _console.info("Request for: ", chalk.blue(req.originalUrl))
 
         //if no proxy found got to next 
         if (!proxy) return next();
 
 
         //handle interceptor
-        console.info("Request came to proxy handler...");
+        _console.info("Request came to proxy handler...");
         const sequence = new ConnectSequence(req, res, next);
 
         //appending interceptor dynamically
-        console.info("Appending interceptors...");
+        _console.info("Appending interceptors...");
         sequence.append(...(proxy.interceptors ?? []));
 
         //appending dynamic proxy
-        console.info("Appending main handler");
+        _console.info("Appending main handler");
 
         sequence.append(createProxyMiddleware({
             target: proxy.target,
@@ -78,7 +88,7 @@ export default async function ProxyHandler(options: {
         }))
 
         //execute
-        console.info("Executing handler");
+        _console.info("Executing handler");
         sequence.run();
     }
 }

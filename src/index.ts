@@ -33,7 +33,10 @@ const reboot = async () => {
     app.get("/auth", (req, res, next) => next(new Error("Cool working...")));
 
     //handling proxies
-    const handler = await ProxyHandler({filepath : path.resolve(__dirname+"/../config/proxies.js")});
+    const handler = await ProxyHandler({
+        filepath : path.resolve(__dirname+"/../config/proxies.js"),
+        debug: process.env.NODE_ENV == "dev"
+    });
     app.use(handler);
 
     //error handler
