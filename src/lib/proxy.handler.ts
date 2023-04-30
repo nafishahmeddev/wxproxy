@@ -77,3 +77,5 @@ export default async function ProxyHandler(options: {
         sequence.run();
     }
 }
+
+process.on('warning', e => console.warn(e.stack));
