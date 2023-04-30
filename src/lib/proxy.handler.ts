@@ -4,13 +4,20 @@ import chalk from "chalk";
 import ConnectSequence from "connect-sequence";
 import { createProxyMiddleware } from 'http-proxy-middleware';
 
+
+function parse(str) {
+    return Function(`'use strict'; return (${str})`)()
+}
+
 let proxies = [];
 const reload = async (filepath) => {
     try {
         console.info("Initiating proxies...");
-        console.log(filepath);
-        //delete require.cache[require.resolve(filepath)];
-        proxies = (await import(filepath)).default;
+        const proxiesString = fs.readFileSync(filepath).toString();
+        const tmpFile = __dirname+"/proxies.tmp.js";
+        fs.writeFileSync(tmpFile, proxiesString);
+        delete require.cache[require.resolve("./proxies.tmp.js")];
+        proxies = (await import("./proxies.tmp.js")).default;
         console.success("Proxies has been repopulated successfully");
     } catch (err) {
         console.error("There is some error in routes", err);
@@ -25,19 +32,14 @@ const watcher = (filepath) => {
     });
 }
 
-export default async function  ProxyHandler(options: {
-    filepath : string
+export default async function ProxyHandler(options: {
+    filepath: string
 }) {
-    import(path.relative(__dirname,options.filepath)).then(res=>{
-        console.log(res);
-    }).catch(err=>console.error(err.message));
-    return (req, res, next) =>{next()}
     //assign watcher
     await watcher(options.filepath);
 
     //assign proxies
     await reload(options.filepath);
-    console.log(options.filepath);
 
     return (req: any, res, next) => {
         const proxy = proxies.find(proxy => {

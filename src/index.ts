@@ -10,6 +10,7 @@ import http from "http";
 
 import chalk from "chalk";
 import { HttpLogger } from "./interceptors/HttpLogger";
+import ProxyHandler from "./lib/proxy.handler";
 
 //assign logger to the project
 Logger({ scope: "Gateway" });
@@ -26,63 +27,14 @@ app.use(HttpLogger({
     response : false
 }));
 
-//initiate proxies
-let proxies = [];
-const reloadProxies = async () => {
-    try {
-        console.info("Initiating proxies...");
-        delete require.cache[require.resolve(`./../config/proxies.js`)];
-        proxies = (await import(`../config/proxies.js`)).default;
-        console.success("Proxies has been repopulated successfully");
-    } catch (err) {
-        console.error("There is some error in routes", err);
-    }
-}
 const reboot = async () => {
-    //loading proxies
-    await reloadProxies();
-
     //assigning dynamic routes
     app.get("/test", (req, res) => res.send("Gateway is running...."));
     app.get("/auth", (req, res, next) => next(new Error("Cool working...")));
 
     //handling proxies
-    app.use((req: any, res, next) => {
-        const proxy = proxies.find(proxy=>{
-            if(proxy.host && proxy.host!="*" && proxy.host != req.hostname) return false;
-            return req.originalUrl.startsWith(proxy.prefix)
-        });
-        console.info("Request for: ", chalk.blue(req.originalUrl))
-
-        //if no proxy found got to next 
-        if (!proxy) return next();
-
-
-        //handle interceptor
-        console.info("Request came to proxy handler...");
-        const sequence = new ConnectSequence(req, res, next);
-
-        //appending interceptor dynamically
-        console.info("Appending interceptors...");
-        sequence.append(...(proxy.interceptors ?? []));
-
-        //appending dynamic proxy
-        console.info("Appending main handler");
-
-        sequence.append(createProxyMiddleware({
-            target: proxy.target,
-            ws: proxy.ws ? true : false,
-            changeOrigin: proxy.changeOrigin ? true : false,
-            logLevel: proxy.logLevel ?? "silent",
-            pathRewrite: {
-                [`^${proxy.prefix}`]: '/',
-            },
-        }))
-
-        //execute
-        console.info("Executing handler");
-        sequence.run();
-    });
+    const handler = await ProxyHandler({filepath : path.resolve(__dirname+"/../config/proxies.js")});
+    app.use(handler);
 
     //error handler
     app.use(function (err, req, res, next) {
@@ -114,8 +66,3 @@ const reboot = async () => {
     })
 }
 reboot();
-//watch route file
-fs.watchFile(path.resolve(__dirname + `/../config/proxies.js`), async (curr, prev) => {
-    console.warn("proxies file has been changed reassigning proxies");
-    await reloadProxies();
-});
