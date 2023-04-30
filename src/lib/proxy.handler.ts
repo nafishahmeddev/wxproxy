@@ -6,10 +6,6 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 
 
 let _console : any = console;
-function parse(str) {
-    return Function(`'use strict'; return (${str})`)()
-}
-
 let proxies = [];
 const reload = async (filepath) => {
     try {
@@ -81,7 +77,7 @@ export default async function ProxyHandler(options: {
             target: proxy.target,
             ws: proxy.ws ? true : false,
             changeOrigin: proxy.changeOrigin ? true : false,
-            //logLevel: "silent",
+            logLevel: options.debug ? 'debug' :"error",
             pathRewrite: {
                 [`^${proxy.prefix}`]: '/',
             },

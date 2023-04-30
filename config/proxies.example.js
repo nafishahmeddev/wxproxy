@@ -15,7 +15,6 @@ module.exports = [
         prefix: "/api/v1/wss",
         target: "http://localhost:8001",
         changeOrigin: true,
-        ws: true,
-        logLevel: 'debug',
+        ws: true
     }
 ]
