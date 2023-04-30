@@ -14,9 +14,13 @@ const reload = async (filepath) => {
     try {
         console.info("Initiating proxies...");
         const proxiesString = fs.readFileSync(filepath).toString();
-        const tmpFile = __dirname+"/proxies.tmp.js";
+        const tmpFile = __dirname + "/proxies.tmp.js";
         fs.writeFileSync(tmpFile, proxiesString);
-        delete require.cache[require.resolve("./proxies.tmp.js")];
+        try {
+            delete require.cache[require.resolve("./proxies.tmp.js")];
+        } catch (err) {
+
+        }
         proxies = (await import("./proxies.tmp.js")).default;
         console.success("Proxies has been repopulated successfully");
     } catch (err) {
