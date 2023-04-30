@@ -22,17 +22,17 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '/../views'));
 
 //http logger
-app.use(HttpLogger({
-    response : false
-}));
+// app.use(HttpLogger({
+//     response : false
+// }));
 
 //initiate proxies
-let proxies = {};
+let proxies = [];
 const reloadProxies = async () => {
     try {
         console.info("Initiating proxies...");
-        delete require.cache[require.resolve(`./config/proxies.js`)];
-        proxies = (await import(`./config/proxies.js`)).default;
+        delete require.cache[require.resolve(`./../config/proxies.js`)];
+        proxies = (await import(`../config/proxies.js`)).default;
         console.success("Proxies has been repopulated successfully");
     } catch (err) {
         console.error("There is some error in routes", err);
@@ -47,18 +47,15 @@ const reboot = async () => {
     app.get("/auth", (req, res, next) => next(new Error("Cool working...")));
 
     //handling proxies
-    app.use("/api/v1/:segments*", (req: any, res, next) => {
-        const segments = req.params.segments;
-        const prefix = segments.split("/")[0];
-        const proxy = proxies[prefix];
+    app.use((req: any, res, next) => {
+        const proxy = proxies.find(proxy=>{
+            if(proxy.host && proxy.host!="*" && proxy.host != req.hostname) return false;
+            return req.originalUrl.startsWith(proxy.prefix)
+        });
+        console.info("Request for: ", chalk.blue(req.originalUrl))
 
-        console.info("Request for", segments)
-
-        if (!proxy) return res.status(404).render("errors/error.ejs", { 
-            status: 404,
-            message: "Page not found!",
-            description: " ",
-         });
+        //if no proxy found got to next 
+        if (!proxy) return next();
 
 
         //handle interceptor
@@ -78,7 +75,7 @@ const reboot = async () => {
             changeOrigin: proxy.changeOrigin ? true : false,
             //logLevel: "silent",
             pathRewrite: {
-                [`^/api/v1/${prefix}`]: '/',
+                [`^${proxy.prefix}`]: '/',
             },
         }))
 
@@ -118,7 +115,7 @@ const reboot = async () => {
 }
 reboot();
 //watch route file
-fs.watchFile(path.resolve(__dirname + `/config/proxies.${process.env.NODE_ENV == "dev" ? "js" : "js"}`), async (curr, prev) => {
+fs.watchFile(path.resolve(__dirname + `/../config/proxies.js`), async (curr, prev) => {
     console.warn("proxies file has been changed reassigning proxies");
     await reloadProxies();
 });
