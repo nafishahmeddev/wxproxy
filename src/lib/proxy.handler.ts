@@ -46,23 +46,22 @@ export default async function ProxyHandler(options: {
             if (proxy.host && proxy.host != "*" && proxy.host != req.hostname) return false;
             return req.originalUrl.startsWith(proxy.prefix)
         });
-        console.info("Request for: ", chalk.blue(req.originalUrl))
+        options.debug && console.info("Request for: ", chalk.blue(req.originalUrl))
 
         //if no proxy found got to next 
         if (!proxy) return next();
 
 
         //handle interceptor
-        console.info("Request came to proxy handler...");
+        options.debug && console.info("Request came to proxy handler...");
         const sequence = new ConnectSequence(req, res, next);
 
         //appending interceptor dynamically
-        console.info("Appending interceptors...");
+        options.debug && console.info("Appending interceptors...");
         sequence.append(...(proxy.interceptors ?? []));
 
         //appending dynamic proxy
-        console.info("Appending main handler");
-
+        options.debug && console.info("Appending main handler");
         sequence.append(createProxyMiddleware({
             target: proxy.target,
             ws: proxy.ws ? true : false,
