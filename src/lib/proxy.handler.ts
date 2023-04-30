@@ -2,8 +2,10 @@ import fs from "fs";
 import path from "path";
 import chalk from "chalk";
 import ConnectSequence from "connect-sequence";
-import { createProxyMiddleware } from 'http-proxy-middleware';
+import HttpProxy from 'http-proxy';
 
+
+let server = HttpProxy.createProxyServer({});
 let proxies = [];
 const reload = async (filepath) => {
     try {
@@ -33,7 +35,7 @@ const watcher = (filepath) => {
 
 export default async function ProxyHandler(options: {
     filepath: string,
-    debug? : boolean
+    debug?: boolean
 }) {
     //assign watcher
     await watcher(options.filepath);
@@ -62,15 +64,16 @@ export default async function ProxyHandler(options: {
 
         //appending dynamic proxy
         options.debug && console.info("Appending main handler");
-        sequence.append(createProxyMiddleware({
-            target: proxy.target,
-            ws: proxy.ws ? true : false,
-            changeOrigin: proxy.changeOrigin ? true : false,
-            logLevel: options.debug ? 'debug' :"error",
-            pathRewrite: {
-                [`^${proxy.prefix}`]: '/',
-            },
-        }))
+        sequence.append((req,res) => {
+            server.web(req, res, {
+                target: proxy.target,
+                ws: proxy.ws ? true : false,
+                changeOrigin: proxy.changeOrigin ? true : false,
+                ignorePath: true
+            }, (err)=>{
+                console.error(err);
+            });
+        })
 
         //execute
         options.debug && console.info("Executing handler");

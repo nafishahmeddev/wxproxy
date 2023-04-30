@@ -4,8 +4,6 @@ import express from "express";
 import Logger from './lib/logger';
 import fs from "fs";
 import path from "path";
-import ConnectSequence from "connect-sequence";
-import { createProxyMiddleware } from 'http-proxy-middleware';
 import http from "http";
 
 import chalk from "chalk";

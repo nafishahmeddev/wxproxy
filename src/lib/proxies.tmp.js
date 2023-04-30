@@ -2,7 +2,7 @@ module.exports = [
     {
         host: "*",
         prefix: "/api/v1/mynu",
-        target: "http://localhost:8000/auth",
+        target: "http://localhost:8000/test",
         ws: false,
         interceptors: [
             (req, res, next) => {
