@@ -21,14 +21,13 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '/../views'));
 
 //http logger
-// app.use(HttpLogger({
-//     response : false
-// }));
+app.use(HttpLogger({
+    response : false
+}));
 
 const reboot = async () => {
     //assigning dynamic routes
-    app.get("/test", (req, res) => res.send("Gateway is running...."));
-    app.get("/auth", (req, res, next) => next(new Error("Cool working...")));
+    app.get("/ping", (req, res) => res.send("Gateway is running...."));
 
     //handling proxies
     const handler = await ProxyHandler({
