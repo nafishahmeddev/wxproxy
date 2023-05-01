@@ -1,8 +1,8 @@
 module.exports = [
     {
         host: "*",
-        prefix: "/api/v1/mynu",
-        target: "http://localhost:8000/auth",
+        prefix: "/api/v1",
+        target: "http://localhost:8000/test",
         ws: false,
         interceptors: [
             (req, res, next) => {
@@ -11,8 +11,8 @@ module.exports = [
         ]
     },
     {
-        host: "*",
-        prefix: "/api/v1/wss",
+        host: "localhost",
+        prefix: "/api/v1/test",
         target: "http://localhost:8001",
         changeOrigin: true,
         ws: true

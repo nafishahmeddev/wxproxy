@@ -33,16 +33,16 @@ const watcher = (filepath) => {
     });
 }
 
-export default async function ProxyHandler(options: {
+export default function ProxyHandler(options: {
     filepath: string,
     debug?: boolean,
     watch?: boolean
 }) {
     //assign watcher
-    options.watch && await watcher(options.filepath);
+    options.watch && watcher(options.filepath);
 
     //assign proxies
-    await reload(options.filepath);
+    reload(options.filepath);
 
     //create server 
     const server = HttpProxy.createProxyServer({});
