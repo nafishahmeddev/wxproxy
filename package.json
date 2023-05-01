@@ -5,13 +5,14 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "module": "commonjs",
+  "keywords": ["express-proxy", "http-proxy", "live-proxy", "reactive-proxy"],
   "scripts": {
     "dev": "NODE_ENV=dev nodemon src/index.ts",
     "build": "tsc --build --verbose",
     "prepublish": "tsc --build --verbose",
     "start": "node dist/index.js"
   },
-  "author": "",
+  "author": "Nafish Ahmed",
   "license": "ISC",
   "dependencies": {
     "chalk": "^4.1.2",
