@@ -6,7 +6,7 @@
   "module": "commonjs",
   "scripts": {
     "dev": "NODE_ENV=dev nodemon src/index.ts",
-    "build": "tsc",
+    "build": "tsc --build --verbose",
     "start": "node dist/index.js"
   },
   "author": "",
