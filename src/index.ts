@@ -1,69 +1,92 @@
-import dotenv from "dotenv";
-dotenv.config();
-import express from "express";
-import Logger from './lib/logger';
 import fs from "fs";
 import path from "path";
-import http from "http";
-
 import chalk from "chalk";
-import { HttpLogger } from "./interceptors/HttpLogger";
-import ProxyHandler from "./lib/proxy.handler";
+import ConnectSequence from "connect-sequence";
+import HttpProxy from 'http-proxy';
+import _ from "lodash";
+import Logger from "./lib/logger";
 
-//assign logger to the project
-const logger = Logger({ scope: "Server" });
+const logger = Logger({scope: "Proxy"});
 
-//initiate express app
-const app = express();
+let proxies = [];
+const reload = async (filepath) => {
+    try {
+        logger.info("Loading proxies configuration...");
+        try {
+            delete require.cache[require.resolve(filepath)];
+        } catch (err) {
 
-//initiate view engine
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, '/../views'));
-
-//http logger
-app.use(HttpLogger({
-    response : false
-}));
-
-const reboot = async () => {
-    //assigning dynamic routes
-    app.get("/ping", (req, res) => res.send("Gateway is running...."));
-
-    //handling proxies
-    const handler = await ProxyHandler({
-        filepath : path.resolve(__dirname+"/../config/proxies.js"),
-        debug: process.env.NODE_ENV == "dev",
-        watch: true
-    });
-    app.use(handler);
-
-    //error handler
-    app.use(function (err, req, res, next) {
-        res.status(err.status || 500);
-        res.render("errors/error.ejs", { 
-            status: err.status || 500,
-            message: err.message,
-            description: err.stack,
-
-        });
-    });
-    app.use(function (req, res, next) {
-        res.status(400);
-        res.render("errors/error.ejs", { 
-            status:400,
-            message: "Page not found",
-            description: " ",
-
-        });
-    });
-
-    //initialize server
-    const server = http.createServer(app);
-
-    //listen to server
-    const port = Number(process.env.PORT) || 8000;
-    server.listen(port, () => {
-        logger.success("Server listening to ", chalk.green(port));
-    })
+        }
+        proxies = (await import(filepath)).default;
+        logger.success("Proxies has been repopulated successfully");
+    } catch (err) {
+        logger.error("There is some error in routes", err);
+    }
 }
-reboot();
+
+const watcher = (filepath) => {
+    //watch route file
+    logger.info("Watcher Initialized...")
+    fs.watchFile(path.resolve(filepath), async (curr, prev) => {
+        logger.info("proxies file has been changed reassigning proxies");
+        await reload(filepath);
+    });
+}
+
+export default async function ProxyHandler(options: {
+    filepath: string,
+    debug?: boolean,
+    watch?: boolean
+}) {
+    //assign watcher
+    options.watch && await watcher(options.filepath);
+
+    //assign proxies
+    await reload(options.filepath);
+
+    //create server 
+    const server = HttpProxy.createProxyServer({});
+    server.on("error", (err) => logger.error(err));
+
+    //return handler
+    return (req: any, res, next) => {
+        const proxy = proxies.find(proxy => {
+            if (proxy.host && proxy.host != "*" && proxy.host != req.hostname) return false;
+            return req.originalUrl.startsWith(proxy.prefix)
+        });
+        options.debug && logger.info("Request for: ", chalk.blue(req.originalUrl))
+
+        //if no proxy found got to next 
+        if (!proxy) return next();
+        options.debug && logger.info("Proxy info is", proxy);
+
+        //handle interceptor
+        options.debug && logger.info("Request came to proxy handler...");
+        const sequence = new ConnectSequence(req, res, next);
+
+        //appending interceptor dynamically
+        options.debug && logger.info("Appending interceptors...");
+        sequence.append(...(proxy.interceptors ?? []));
+
+        //appending dynamic proxy
+        options.debug && logger.info("Appending main handler");
+        sequence.append((req, res, next) => {
+            req.url = req.url.replace(proxy.prefix, "");
+            server.web(req, res, {
+                target: proxy.target,
+                ws: proxy.ws ? true : false,
+                changeOrigin: proxy.changeOrigin ? true : false,
+                toProxy: true
+            }, (err) => {
+                logger.error(err);
+                next(err);
+            });
+        })
+
+        //execute
+        options.debug && logger.info("Executing handler");
+        sequence.run();
+    }
+}
+
+process.on('warning', e => logger.warn(e.stack));
