@@ -4,21 +4,16 @@ import chalk from "chalk";
 import ConnectSequence from "connect-sequence";
 import HttpProxy from 'http-proxy';
 
-
-let server = HttpProxy.createProxyServer({});
 let proxies = [];
 const reload = async (filepath) => {
     try {
-        console.info("Initiating proxies...");
-        const proxiesString = fs.readFileSync(filepath).toString();
-        const tmpFile = __dirname + "/proxies.tmp.js";
-        fs.writeFileSync(tmpFile, proxiesString);
+        console.info("Loading proxies configuration...");
         try {
-            delete require.cache[require.resolve("./proxies.tmp.js")];
+            delete require.cache[require.resolve(filepath)];
         } catch (err) {
 
         }
-        proxies = (await import("./proxies.tmp.js")).default;
+        proxies = (await import(filepath)).default;
         console.success("Proxies has been repopulated successfully");
     } catch (err) {
         console.error("There is some error in routes", err);
@@ -27,22 +22,29 @@ const reload = async (filepath) => {
 
 const watcher = (filepath) => {
     //watch route file
+    console.info("Watcher Initialized...")
     fs.watchFile(path.resolve(filepath), async (curr, prev) => {
-        console.warn("proxies file has been changed reassigning proxies");
+        console.info("proxies file has been changed reassigning proxies");
         await reload(filepath);
     });
 }
 
 export default async function ProxyHandler(options: {
     filepath: string,
-    debug?: boolean
+    debug?: boolean,
+    watch?: boolean
 }) {
     //assign watcher
-    await watcher(options.filepath);
+    options.watch && await watcher(options.filepath);
 
     //assign proxies
     await reload(options.filepath);
 
+    //create server 
+    const server = HttpProxy.createProxyServer({});
+    server.on("error", (err) => console.error(err));
+
+    //return handler
     return (req: any, res, next) => {
         const proxy = proxies.find(proxy => {
             if (proxy.host && proxy.host != "*" && proxy.host != req.hostname) return false;
@@ -64,14 +66,15 @@ export default async function ProxyHandler(options: {
 
         //appending dynamic proxy
         options.debug && console.info("Appending main handler");
-        sequence.append((req,res) => {
+        sequence.append((req, res, next) => {
             server.web(req, res, {
                 target: proxy.target,
                 ws: proxy.ws ? true : false,
                 changeOrigin: proxy.changeOrigin ? true : false,
                 ignorePath: true
-            }, (err)=>{
+            }, (err) => {
                 console.error(err);
+                next(err);
             });
         })
 

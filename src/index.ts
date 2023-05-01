@@ -33,7 +33,8 @@ const reboot = async () => {
     //handling proxies
     const handler = await ProxyHandler({
         filepath : path.resolve(__dirname+"/../config/proxies.js"),
-        debug: process.env.NODE_ENV == "dev"
+        debug: process.env.NODE_ENV == "dev",
+        watch: true
     });
     app.use(handler);
 
