@@ -25,7 +25,6 @@
     "signale": "^1.4.0"
   },
   "devDependencies": {
-    "@types/express": "^4.17.17",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4"
   }
