@@ -5,7 +5,8 @@ import path from "path";
 import moment from "moment";
 
 export default (config: {
-    scope: string
+    scope: string,
+    overrideConsole?: boolean
 }) => {
     const currentTime = moment();
     const options = {
@@ -14,7 +15,7 @@ export default (config: {
         secrets: [],
         stream: [
             process.stdout,
-            fs.createWriteStream(path.resolve(path.join(__dirname, "../../logs/" ,`${currentTime.format("YYYY-MM-DD")}.log`)),{
+            fs.createWriteStream(path.resolve(path.join(__dirname, "../../logs/", `${currentTime.format("YYYY-MM-DD")}.log`)), {
                 flags: "a"
             })
         ],
@@ -27,15 +28,17 @@ export default (config: {
         displayDate: true
     });
 
-    //assign console to logger
-    console.log = signale.log;
-    console.info = signale.info;
-    console.warn = signale.warn;
-    console.error = signale.error;
-    console.debug = signale.debug;
-    console.success = signale.success
-    console.fetal = signale.fetal
+    //override console with logger
+    if (config.overrideConsole) {
+        console.log = signale.log;
+        console.info = signale.info;
+        console.warn = signale.warn;
+        console.error = signale.error;
+        console.debug = signale.debug;
+        console.success = signale.success
+        console.fetal = signale.fetal
+    }
     //
-    global.logger  = signale;
+    global.logger = signale;
     return signale;
 };

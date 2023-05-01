@@ -11,7 +11,7 @@ import { HttpLogger } from "./interceptors/HttpLogger";
 import ProxyHandler from "./lib/proxy.handler";
 
 //assign logger to the project
-Logger({ scope: "Gateway" });
+Logger({ scope: "Gateway", overrideConsole: true });
 
 //initiate express app
 const app = express();
