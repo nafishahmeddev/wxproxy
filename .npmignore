@@ -2,3 +2,4 @@ src/
 tsconfig.json
 config/
 .eslintrc.js
+.vscode
