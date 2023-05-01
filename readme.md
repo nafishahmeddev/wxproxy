@@ -17,8 +17,8 @@ app.get('/', (req, res) => {
 
 app.use(ProxyHandler({
     filepath: path.resolve(__dirname, "./proxies.js"),
-    debug : true,
-    watch : true
+    debug : true, //print debug console
+    watch : true //watch the file and update proxies on file change
 }))
 
 app.listen(port, () => {
