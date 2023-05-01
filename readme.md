@@ -9,13 +9,13 @@ const path = require("path");
 const express = require('express')
 const app = express()
 const port = 3000
-const xproxy = require("xproxy-gateway");
+const {ProxyHandler} = require("xproxy-gateway");
 
 app.get('/', (req, res) => {
   res.send('Hello World!')
 })
 
-app.use(xproxy({
+app.use(ProxyHandler({
     filepath: path.resolve(__dirname, "./proxies.js"),
     debug : true,
     watch : true
