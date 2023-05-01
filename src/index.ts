@@ -11,7 +11,7 @@ import { HttpLogger } from "./interceptors/HttpLogger";
 import ProxyHandler from "./lib/proxy.handler";
 
 //assign logger to the project
-Logger({ scope: "Gateway", overrideConsole: true });
+const logger = Logger({ scope: "Server" });
 
 //initiate express app
 const app = express();
@@ -63,7 +63,7 @@ const reboot = async () => {
     //listen to server
     const port = Number(process.env.PORT) || 8000;
     server.listen(port, () => {
-        console.success("Server listening to ", chalk.green(port));
+        logger.success("Server listening to ", chalk.green(port));
     })
 }
 reboot();

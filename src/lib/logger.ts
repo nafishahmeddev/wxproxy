@@ -5,8 +5,7 @@ import path from "path";
 import moment from "moment";
 
 export default (config: {
-    scope: string,
-    overrideConsole?: boolean
+    scope: string
 }) => {
     const currentTime = moment();
     const options = {
@@ -28,17 +27,6 @@ export default (config: {
         displayDate: true
     });
 
-    //override console with logger
-    if (config.overrideConsole) {
-        console.log = signale.log;
-        console.info = signale.info;
-        console.warn = signale.warn;
-        console.error = signale.error;
-        console.debug = signale.debug;
-        console.success = signale.success
-        console.fetal = signale.fetal
-    }
-    //
     global.logger = signale;
     return signale;
 };
