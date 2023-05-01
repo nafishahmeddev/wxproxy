@@ -33,7 +33,7 @@ const watcher = (filepath) => {
     });
 }
 
-export default function ProxyHandler(options: {
+export function ProxyHandler(options: {
     filepath: string,
     debug?: boolean,
     watch?: boolean
