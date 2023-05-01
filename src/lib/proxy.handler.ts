@@ -55,7 +55,7 @@ export default async function ProxyHandler(options: {
 
         //if no proxy found got to next 
         if (!proxy) return next();
-
+        options.debug && console.info("Proxy info is", proxy);
 
         //handle interceptor
         options.debug && console.info("Request came to proxy handler...");
