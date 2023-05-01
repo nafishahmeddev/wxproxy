@@ -2,8 +2,8 @@ import fs from "fs";
 import path from "path";
 import chalk from "chalk";
 import ConnectSequence from "connect-sequence";
+import HttpProxy from 'http-proxy';
 import _ from "lodash";
-import { createProxyMiddleware } from "http-proxy-middleware";
 
 let proxies = [];
 const reload = async (filepath) => {
@@ -41,6 +41,10 @@ export default async function ProxyHandler(options: {
     //assign proxies
     await reload(options.filepath);
 
+    //create server 
+    const server = HttpProxy.createProxyServer({});
+    server.on("error", (err) => console.error(err));
+
     //return handler
     return (req: any, res, next) => {
         const proxy = proxies.find(proxy => {
@@ -52,6 +56,7 @@ export default async function ProxyHandler(options: {
         //if no proxy found got to next 
         if (!proxy) return next();
 
+
         //handle interceptor
         options.debug && console.info("Request came to proxy handler...");
         const sequence = new ConnectSequence(req, res, next);
@@ -62,16 +67,18 @@ export default async function ProxyHandler(options: {
 
         //appending dynamic proxy
         options.debug && console.info("Appending main handler");
-        sequence.append(createProxyMiddleware({
-            target: proxy.target,
-            ws: proxy.ws ? true : false,
-            changeOrigin: proxy.changeOrigin ? true : false,
-            logLevel: options.debug ? 'debug' : "silent",
-            pathRewrite: {
-                [`^${proxy.prefix}`]: '',
-            },
-        }))
-
+        sequence.append((req, res, next) => {
+            req.url = req.url.replace(proxy.prefix, "");
+            server.web(req, res, {
+                target: proxy.target,
+                ws: proxy.ws ? true : false,
+                changeOrigin: proxy.changeOrigin ? true : false,
+                toProxy: true
+            }, (err) => {
+                console.error(err);
+                next(err);
+            });
+        })
 
         //execute
         options.debug && console.info("Executing handler");
