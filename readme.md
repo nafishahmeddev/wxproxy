@@ -1,6 +1,6 @@
 Install 
 ```
-npm i xproxy-gateway
+npm i wxproxy
 ```
 
 Setup with express server
@@ -9,7 +9,7 @@ const path = require("path");
 const express = require('express')
 const app = express()
 const port = 3000
-const {ProxyHandler} = require("xproxy-gateway");
+const {ProxyHandler} = require("wxproxy");
 
 app.get('/', (req, res) => {
   res.send('Hello World!')
