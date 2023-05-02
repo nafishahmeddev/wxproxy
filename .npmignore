@@ -3,3 +3,4 @@ tsconfig.json
 config/
 .eslintrc.js
 .vscode
+dist/example/

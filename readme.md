@@ -1,25 +1,36 @@
-Install 
+Install
+
 ```
 npm i wxproxy
 ```
 
 Setup with express server
+
 ```
 const path = require("path");
 const express = require('express')
 const app = express()
 const port = 3000
-const {ProxyHandler} = require("wxproxy");
+const {ProxyRouter, FileSystemRouter} = require("wxproxy");
 
 app.get('/', (req, res) => {
   res.send('Hello World!')
 })
 
-app.use(ProxyHandler({
+//for proxies
+app.use(ProxyRouter({
     filepath: path.resolve(__dirname, "./proxies.js"),
     debug : true, //print debug console
     watch : true //watch the file and update proxies on file change
 }))
+
+//for filesystem routing
+app.use("/pages",FileSystemRouter({
+    directory: path.resolve(path.join(__dirname, "pages")),
+    prefix:"/pages",
+    watcher: true
+}))
+
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
@@ -27,6 +38,7 @@ app.listen(port, () => {
 ```
 
 Proxy configuration file (proxies.js)
+
 ```
 module.exports = [
     {

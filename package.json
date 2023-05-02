@@ -1,28 +1,31 @@
 {
   "name": "wxproxy",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Proxy gateway works along with express js to control modify routes without restarting the server...",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "index.js",
+  "types": "index.d.ts",
   "module": "commonjs",
-  "keywords": ["express-proxy", "http-proxy", "live-proxy", "reactive-proxy"],
+  "keywords": [
+    "express-proxy",
+    "http-proxy",
+    "live-proxy",
+    "reactive-proxy"
+  ],
   "scripts": {
-    "dev": "NODE_ENV=dev nodemon src/index.ts",
+    "dev": "NODE_ENV=dev nodemon src/example/index.ts",
     "build": "tsc --build --verbose",
-    "prepublish": "tsc --build --verbose",
-    "start": "node dist/index.js"
+    "prepublish": "tsc --build --verbose"
   },
   "author": "Nafish Ahmed",
   "license": "ISC",
   "dependencies": {
     "chalk": "^4.1.2",
     "connect-sequence": "^2.1.1",
-    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
     "http-proxy": "^1.18.1",
-    "lodash": "^4.17.21",
     "moment": "^2.29.4",
     "npm": "^9.6.5",
-    "npmlog": "^7.0.1",
+    "path-to-regexp": "^6.2.1",
     "signale": "^1.4.0"
   },
   "devDependencies": {
