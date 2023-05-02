@@ -52,7 +52,8 @@ const reload = (directory) => {
 const watcher = (directory) => {
     //watch route file
     logger.info("Watcher Initialized...")
-    fs.watch(path.resolve(directory), { recursive: true },async (curr, prev) => {
+    fs.watch(path.resolve(directory), { recursive: true },async (type, filename) => {
+        delete require.cache[require.resolve(path.join(directory,filename))]
         logger.info("Route file has been changed reassigning routes");
         await reload(directory);
     });
