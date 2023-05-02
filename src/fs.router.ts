@@ -52,7 +52,7 @@ const reload = (directory) => {
 const watcher = (directory) => {
     //watch route file
     logger.info("Watcher Initialized...")
-    fs.watchFile(path.resolve(directory), async (curr, prev) => {
+    fs.watch(path.resolve(directory), { recursive: true },async (curr, prev) => {
         logger.info("Route file has been changed reassigning routes");
         await reload(directory);
     });
@@ -60,23 +60,23 @@ const watcher = (directory) => {
 
 
 export function FileSystemRouter(options: {
-    directory?: string
-    prefix?: string,
-    watcher?: boolean
+    directory?: string,
+    debug?: boolean,
+    watch?: boolean
 } = {
         directory: null,
-        prefix: null,
-        watcher: false
+        debug: false,
+        watch: false
     }) {
     options.directory = options.directory ?? path.dirname(require.main.filename);
     reload(options.directory);
-    options.watcher && watcher(options.directory)
+    options.watch && watcher(options.directory)
 
 
     return async (req, res, next) => {
         const route = routes.find(route => route.regexp.test(req.url));
         if (!route) return next();
-        logger.info("Matched route is: ", route.path)
+        options.debug && logger.info("Matched route is: ", route.path)
         const matched: any = (match(route.path, { decode: decodeURIComponent })(req.url));
         const params = matched.params;
         req.params = params;
@@ -84,11 +84,13 @@ export function FileSystemRouter(options: {
         try {
             const module = await import(route.module);
             if (module[req.method.toLowerCase()]) {
-                logger.info("Serving:", req.method)
+                options.debug && logger.info("Serving:", req.method)
                 sequence.append(module[req.method.toLowerCase()]);
             } else if (module.default) {
+                options.debug && logger.info("Serving default", req.method)
                 sequence.append(module.default);
             } else {
+                options.debug && logger.info("No handler found")
                 throw new Error("No router found");
             }
         } catch (err) {

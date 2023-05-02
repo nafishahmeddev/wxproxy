@@ -6,7 +6,7 @@ const app = express();
 
 app.use("/pages",FileSystemRouter({
     directory: path.resolve(path.join(__dirname, "pages")),
-    watcher: true
+    watch: true
 }))
 
 
