@@ -27,7 +27,6 @@ app.use(ProxyRouter({
 //for filesystem routing
 app.use("/pages",FileSystemRouter({
     directory: path.resolve(path.join(__dirname, "pages")),
-    prefix:"/pages",
     watcher: true
 }))
 
