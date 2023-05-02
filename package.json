@@ -1,9 +1,9 @@
 {
   "name": "wxproxy",
-  "version": "1.0.6",
+  "version": "1.0.10",
   "description": "Proxy gateway works along with express js to control modify routes without restarting the server...",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "module": "commonjs",
   "keywords": [
     "express-proxy",
